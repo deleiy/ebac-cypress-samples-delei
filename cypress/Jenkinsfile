@@ -1,0 +1,76 @@
+
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    ansiColor('xterm')
+    timeout(time: 30, unit: 'MINUTES')
+  }
+
+  environment {
+    NO_COLOR = '1'
+    CYPRESS_CACHE_FOLDER = "${WORKSPACE}\\.cache\\Cypress"
+    NODE_OPTIONS = '--max_old_space_size=2048'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        // Se estiver usando seu fork, troque a URL
+        git branch: 'main', url: 'https://github.com/EBAC-QE/ebac-cypress-samples.git'
+      }
+    }
+
+    stage('Instalar dependências') {
+      steps {
+        bat 'node -v'
+        bat 'npm -v'
+        // Se existe package-lock.json → npm ci; senão → npm install
+        bat 'if exist package-lock.json (npm ci) else (npm install)'
+      }
+    }
+
+    stage('Executar Testes (Cypress)') {
+      steps {
+        // Seu package.json já gera JUnit; mantenha tudo no mesmo bat
+        bat '''set NO_COLOR=1
+npm test'''
+        // Alternativa direta:
+        // bat '''set NO_COLOR=1
+        // npx cypress run --reporter mocha-junit-reporter --reporter-options mochaFile=cypress\\results\\results-[hash].xml'''
+      }
+    }
+
+    stage('Publicar Relatórios') {
+      steps {
+        // Lê os XMLs gerados em cypress\\results\\
+        junit allowEmptyResults: true, testResults: 'cypress\\results\\*.xml'
+
+        // Arquiva vídeos e screenshots (se existirem)
+        archiveArtifacts artifacts: 'cypress\\videos\\**, cypress\\screenshots\\**', allowEmptyArchive: true
+      }
+    }
+
+    // Mochawesome (opcional)
+    stage('Gerar Mochawesome (opcional)') {
+      when {
+        anyOf {
+          expression { fileExists('mochawesome-report/*.json') }
+          expression { fileExists('mochawesome-report/merged.json') }
+        }
+      }
+      steps {
+        bat 'npm run report:merge || exit /b 0'
+        bat 'npm run report:generate || exit /b 0'
+        archiveArtifacts artifacts: 'mochawesome-report/**', allowEmptyArchive: true
+      }
+    }
+  }
+
+  post {
+    always { echo 'Pipeline finalizado (Windows).' }
+    success { echo '✅ Sucesso!' }
+    failure { echo '❌ Falhou — verifique o Console Output e os relatórios.' }
+  }
+}

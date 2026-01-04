@@ -1,16 +1,24 @@
+
 {
   "name": "ebac-cypress-samples",
   "version": "1.0.0",
   "description": "Default Cypress Tests",
   "main": "index.js",
   "scripts": {
-    "test": "npx cypress run" 
-    
+    "test": "npx cypress run --reporter mocha-junit-reporter --reporter-options mochaFile=cypress/results/results-[hash].xml,toConsole=true",
+    "report:merge": "npx mochawesome-merge mochawesome-report/*.json -o mochawesome-report/merged.json",
+    "report:generate": "npx marge mochawesome-report/merged.json -o mochawesome-report"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "cypress": "^15.1.0"
+  },
+  "devDependencies": {
+    "mocha-junit-reporter": "^2.0.2",
+    "mochawesome": "^7.1.3",
+    "mochawesome-merge": "^4.3.0",
+    "mochawesome-report-generator": "^6.0.1"
   }
 }
