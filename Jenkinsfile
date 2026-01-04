@@ -1,0 +1,24 @@
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/deleiy/ebac-cypress-samples.git'
+            }
+        }
+
+        stage('Instalar Dependências') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('Rodar Testes Cypress') {
+            steps {
+                sh 'npx cypress run'
+            }
+        }
+    }
+}

@@ -1,0 +1,26 @@
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Se o job estiver como "Pipeline script from SCM",
+                // você pode remover esta linha porque o Jenkins fará o checkout automaticamente.
+                git branch: 'main', url: 'https://github.com/deleiy/ebac-cypress-samples.git'
+            }
+        }
+
+        stage('Instalar Dependências') {
+            steps {
+                bat 'npm install'
+            }
+        }
+
+        stage('Rodar Testes Cypress') {
+            steps {
+                bat 'npx cypress run'
+            }
+        }
+    }
+}
